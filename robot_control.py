@@ -14,21 +14,21 @@ from tqdm import tqdm
 
 #variables definition
 Ts = 0.1
-Tw = 0.05
+Tw = 0.1
 forward = 0
 p = np.array([0,0,0])
 trace_x = []
 trace_y = []
-plot = True
+plot = False
 path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
 
 #const definition
-SPEED = 100
+SPEED = 50
 MAX_SPEED = 500
 
 t = np.array([0,0], dtype = 'float64')
 
-def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.032):
+def odometry(p, t, MAX_SPEED, B = 8, CALIB = 0.032):
 
     #get elapsed time and wheels speed
     t[1] = time.time()
@@ -48,8 +48,6 @@ def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.032):
     if speed_r > MAX_SPEED:
         speed_r = speed_r - 2**16
     
-    #print(speed_r, speed_l)
-
     ds_l = T*speed_l*CALIB
     ds_r = T*speed_r*CALIB
     
@@ -60,14 +58,14 @@ def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.032):
     dy = ds*math.sin(p[2] + d_theta/2)
     dp = np.array([dx, dy, d_theta])
     p = p + dp
-    print('position ', p)
+    
     return p,t
 
 def popcol(my_array,pc):
     """ column popping in numpy arrays
     Input: my_array: NumPy array, pc: column index to pop out
     Output: [new_array,popped_col] """
-    print('OK')
+    print('                             waypoint reached')
     i = pc
     pop = my_array[:,i]
     new_array = np.hstack((my_array[:,:i],my_array[:,i+1:]))
@@ -75,83 +73,52 @@ def popcol(my_array,pc):
 
 def path_following(p, path, THREASHOLD = 0.5):
     
-    # if not len(path):
-    #     th.set_var("motor.left.target", 0)
-    #     th.set_var("motor.right.target", 0)
-    #     return
+    # if the robot has reached the last point, set speed to 0 and return
+    if len(path) == 0:
+        th.set_var("motor.left.target", 0)
+        th.set_var("motor.right.target", 0)
+        return path
     
+    #waypoint metrics
     waypoint = path[:,0]
     waypoint_dir = waypoint-[p[0],p[1]]
     waypoint_dist = math.sqrt(sum(waypoint_dir**2))
-    print('waypoint ', waypoint)
-    print('waypoint dir ', waypoint_dir)
-    print('waypoint dist ', waypoint_dist)
-    print('path', path)
+
     if waypoint_dist < THREASHOLD:
         path, waypoint = popcol(path, 0)
     
     waypoint_ang = math.atan2(waypoint_dir[1],waypoint_dir[0])
-    err_angle = p[2] - waypoint_ang
-    print('error angle  ', err_angle)
+    err_angle = waypoint_ang - p[2]
+    if math.fabs(err_angle) > math.pi:
+        err_angle = 2*math.pi - err_angle
+
+    #print some variables
+    print('position:         ', p)
+    print('waypoint:         ', waypoint)
+    print('waypoint dir:     ', waypoint_dir)
+    print('waypoint dist:    ', waypoint_dist)
+    print('waypoint angle:   ', waypoint_ang)
+    print('error angle:      ', err_angle)
 
     speed_regulation(waypoint_dist, err_angle)
 
     return path
 
-def speed_regulation(waypoint_dist, err_angle, K = 25, FORWARD_THREASHOLD = 0.1):
+def speed_regulation(waypoint_dist, err_angle, FORWARD_THREASHOLD = 0.1):
 
     
-    ang_speed = np.int16(err_angle*K)
-    print('angular speed  ', ang_speed)
-    if math.fabs(err_angle) < FORWARD_THREASHOLD:
-        forward_speed = SPEED
-    else:
-        forward_speed = 0
-
-    if ang_speed >= 0:
-        reg_speed_l = forward_speed + ang_speed
-        reg_speed_r = forward_speed - ang_speed
-        th.set_var("motor.left.target", reg_speed_l)
-        
-        if reg_speed_r >= 0:
-            th.set_var("motor.right.target", reg_speed_r)
-        else:
-            th.set_var("motor.right.target", 2**16 + reg_speed_r)
-
-    else:
-        reg_speed_l = forward_speed - ang_speed
-        reg_speed_r = forward_speed + ang_speed
-        th.set_var("motor.right.target", reg_speed_r)
-
-        if reg_speed_l >= 0:
-            th.set_var("motor.left.target", reg_speed_l)
-        else:
-            th.set_var("motor.left.target", 2**16 + reg_speed_l)
-
-    print('speed r  ', reg_speed_r)
-    print('speed l  ', reg_speed_l)
-
-
-
-    # if math.fabs(ang_speed) <= forward_speed:
-    #     if ang_speed > 0:
-    #         th.set_var("motor.left.target", forward_speed + ang_speed)
-    #         th.set_var("motor.right.target", forward_speed - ang_speed)
-    #     else:
-    #         th.set_var("motor.left.target", forward_speed - ang_speed)
-    #         th.set_var("motor.right.target", forward_speed + ang_speed)
-
-    # if math.fabs(ang_speed) > forward_speed:
-    #     if ang_speed > 0:
-    #         th.set_var("motor.left.target", forward_speed + ang_speed)
-    #         th.set_var("motor.right.target", 2**16 - forward_speed - ang_speed)
-    #     else:
-    #         th.set_var("motor.left.target", 2**16 - forward_speed - ang_speed)
-    #         th.set_var("motor.right.target", forward_speed + ang_speed)
-
-
+    if math.fabs(err_angle) <= FORWARD_THREASHOLD:
+        th.set_var("motor.left.target", SPEED)
+        th.set_var("motor.right.target", SPEED)
+    if err_angle > FORWARD_THREASHOLD:
+        th.set_var("motor.left.target", 2**16 - SPEED)
+        th.set_var("motor.right.target", SPEED)
+    if err_angle < (-1*FORWARD_THREASHOLD):
+        th.set_var("motor.left.target", SPEED)
+        th.set_var("motor.right.target", 2**16 - SPEED)
 
 th = Thymio.serial(port="COM3", refreshing_rate=Ts)
+
 # wait until connected
 while len(th.variable_description()) == 0:
 	time.sleep(0.5)
@@ -160,11 +127,12 @@ while len(th.variable_description()) == 0:
 print("connected")
 time.sleep(3)
 
-plt.ion()
-figure, ax = plt.subplots(figsize=(8,6))
-line1, = ax.plot(p[0],p[1])
-plt.xlim(-50, 50)
-plt.ylim(-50, 50)
+if plot:
+    plt.ion()
+    figure, ax = plt.subplots(figsize=(8,6))
+    line1, = ax.plot(p[0],p[1])
+    plt.xlim(-50, 50)
+    plt.ylim(-50, 50)
 
 # control
 while True:
@@ -197,6 +165,4 @@ while True:
         th.set_var("motor.left.target", 0)
         th.set_var("motor.right.target", 0)
         break
-    #print(p)
-	
-
+quit()
