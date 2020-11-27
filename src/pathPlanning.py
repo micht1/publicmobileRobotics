@@ -9,10 +9,13 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 #class that does pathplanning for a fixed map
 class pathPlaning: 
-    
+   
     def getPath(self):#returns  the path with grid box "accuracy" so a point for every gridbox
-        print("pixel to CM",self.__CMPerPixel)
-        return [tuple([coordinate* float(self.__CMPerPixel) for coordinate in point]) for point in self.__path]
+        path=[tuple([coordinate* float(self.__CMPerPixel) for coordinate in point]) for point in self.__path]
+        path=np.array(path)
+        path = np.array(path).reshape(-1, 2).transpose()
+        path=np.flip(path,0)
+        return path
     def getOptimizedPath(self):     #returns only the  points where the calculated path changes direction
         originalPath=np.array(self.__path)
         originalPath = np.array(originalPath).reshape(-1, 2).transpose()
@@ -28,9 +31,14 @@ class pathPlaning:
                 
             movmentOld=movmentNew
         edgePoints.append(tuple(originalPath[:,-1]))
-        return [tuple([coordinate* float(self.__CMPerPixel) for coordinate in point]) for point in edgePoints]
+        optimalPath =[tuple([coordinate* float(self.__CMPerPixel) for coordinate in point]) for point in edgePoints]
+        optimalPath = np.array(optimalPath)
+        optimalPath = np.array(optimalPath).reshape(-1, 2).transpose()
+        optimalPath = np.flip(optimalPath,0)
+        return optimalPath
         
     def setStart(self,start):
+        start=np.flip(start)                                            #miscommunication lead to the nead to flip where x and y is
         self.__startP=np.around(np.divide(start,self.__CMPerPixel))
         self.__startP=self.__startP.astype(int)
         if(self.__startP[0]>=self.__mapDimensions[0] or self.__startP[1]>=self.__mapDimensions[1] or self.__startP[0]<0 or self.__startP[1]<0):
@@ -41,7 +49,7 @@ class pathPlaning:
         
         
     def setGoal(self,goal):
-    
+        goal=np.flip(goal)                                              #miscommunication lead to the nead to flip where x and y is
         if(LNG.norm(np.subtract(self.__goalP,np.around(np.divide(goal,self.__CMPerPixel))))>self.__tolerance):
             self.__goalP=np.around(np.divide(goal,self.__CMPerPixel))
             self.__goalP=self.__goalP.astype(int)
@@ -69,9 +77,9 @@ class pathPlaning:
         self.__goalP=np.zeros((2,1))
         self.__tolerance=1e-6
         self.__path=[]
-        
-        self.__mapDimensions=self.__map.shape
-        #method to set the goal
+        mapShape=self.__map.shape
+        self.__mapDimensions=tuple((mapShape[0],mapShape[1]))
+
     
     
     def __generateGradient(self):
@@ -113,6 +121,7 @@ class pathPlaning:
         
         
     def __generatePath(self):
+        self.__path=[]
         self.__path.append(tuple(self.__startP))
         movements=self.__get_movements_8n()
         
