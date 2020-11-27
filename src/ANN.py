@@ -13,14 +13,14 @@ import serial
 import numpy as np
 
 # Adding the src folder in the current directory
-sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+#sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
 
 from Thymio import Thymio
 
-th = Thymio.serial(port="COM5", refreshing_rate=0.1)
-time.sleep(1) # To make sure the Thymio has had time to connect
+#th = Thymio.serial(port="COM5", refreshing_rate=0.1)
+#time.sleep(1) # To make sure the Thymio has had time to connect
 
-def move(l_speed=500, r_speed=500, verbose=False):
+def move(thymio,l_speed=500, r_speed=500, verbose=False):
     """
     Sets the motor speeds of the Thymio 
     param l_speed: left motor speed
@@ -36,11 +36,11 @@ def move(l_speed=500, r_speed=500, verbose=False):
     r_speed = r_speed if r_speed >= 0 else 2 ** 16 + r_speed
 
     # Setting the motor speeds
-    th.set_var("motor.left.target", l_speed)
-    th.set_var("motor.right.target", r_speed)
+    thymio.set_var("motor.left.target", l_speed)
+    thymio.set_var("motor.right.target", r_speed)
 
 
-def stop(verbose=False):
+def stop(thymio,verbose=False):
     """
     param verbose: whether to print status messages or not
     """
@@ -49,8 +49,8 @@ def stop(verbose=False):
         print("\t\t Stopping")
 
     # Setting the motor speeds
-    th.set_var("motor.left.target", 0)
-    th.set_var("motor.right.target", 0)
+    thymio.set_var("motor.left.target", 0)
+    thymio.set_var("motor.right.target", 0)
 
 
 def run_ann_without_memory(thymio):
@@ -95,4 +95,4 @@ def run_ann_without_memory(thymio):
             print(j, int(y[0]), int(y[1]), thymio["prox.horizontal"])
             move(int(y[0]), int(y[1]))
   
-  run_ann_without_memory(th)
+  #run_ann_without_memory(th)
