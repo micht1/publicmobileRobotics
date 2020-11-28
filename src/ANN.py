@@ -64,7 +64,7 @@ def run_ann_without_memory(thymio):
     constant_scale = 20
 
     # State for start and stop
-    state = 0
+    state = 1
 
     x = np.zeros(shape=(7,))
     y = np.zeros(shape=(2,))
@@ -72,17 +72,6 @@ def run_ann_without_memory(thymio):
     j = 0
     while True:
         j += 1
-
-        if thymio["button.center"] == 1 and state == 0:
-            state = 1
-            move()
-            print("moving!")
-            time.sleep(0.1)
-        elif thymio["button.center"] == 1 and state == 1:
-            state = 0
-            stop()
-            print("Stopping!")
-            time.sleep(0.1)
 
         if state != 0:
             # Get and scale inputs
@@ -92,7 +81,8 @@ def run_ann_without_memory(thymio):
             y[0] = np.sum(x * w_l) + 100
             y[1] = np.sum(x * w_r) + 100
 
-            print(j, int(y[0]), int(y[1]), thymio["prox.horizontal"])
-            move(int(y[0]), int(y[1]))
-  
+            #print(j, int(y[0]), int(y[1]), thymio["prox.horizontal"])
+            move(thymio,int(y[0]), int(y[1]))
+        if(all(sensorValues==0 for sensorValues in robotStatus.thymio["prox.horizontal"])):
+         return
   #run_ann_without_memory(th)
