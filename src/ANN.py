@@ -72,7 +72,6 @@ def run_ann_without_memory(thymio):
     j = 0
     while True:
         j += 1
-
         if state != 0:
             # Get and scale inputs
             x = np.array(thymio["prox.horizontal"]) / sensor_scale
@@ -84,5 +83,6 @@ def run_ann_without_memory(thymio):
             #print(j, int(y[0]), int(y[1]), thymio["prox.horizontal"])
             move(thymio,int(y[0]), int(y[1]))
         if(all(sensorValues==0 for sensorValues in robotStatus.thymio["prox.horizontal"])):
+            stop(thymio)
          return
   #run_ann_without_memory(th)
