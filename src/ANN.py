@@ -13,14 +13,14 @@ import serial
 import numpy as np
 
 # Adding the src folder in the current directory
-sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+#sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
 
 from Thymio import Thymio
 
-th = Thymio.serial(port="COM5", refreshing_rate=0.1)
-time.sleep(1) # To make sure the Thymio has had time to connect
+#th = Thymio.serial(port="COM5", refreshing_rate=0.1)
+#time.sleep(1) # To make sure the Thymio has had time to connect
 
-def move(l_speed=500, r_speed=500, verbose=False):
+def move(thymio,l_speed=500, r_speed=500, verbose=False):
     """
     Sets the motor speeds of the Thymio 
     param l_speed: left motor speed
@@ -36,11 +36,11 @@ def move(l_speed=500, r_speed=500, verbose=False):
     r_speed = r_speed if r_speed >= 0 else 2 ** 16 + r_speed
 
     # Setting the motor speeds
-    th.set_var("motor.left.target", l_speed)
-    th.set_var("motor.right.target", r_speed)
+    thymio.set_var("motor.left.target", l_speed)
+    thymio.set_var("motor.right.target", r_speed)
 
 
-def stop(verbose=False):
+def stop(thymio,verbose=False):
     """
     param verbose: whether to print status messages or not
     """
@@ -49,8 +49,8 @@ def stop(verbose=False):
         print("\t\t Stopping")
 
     # Setting the motor speeds
-    th.set_var("motor.left.target", 0)
-    th.set_var("motor.right.target", 0)
+    thymio.set_var("motor.left.target", 0)
+    thymio.set_var("motor.right.target", 0)
 
 
 def run_ann_without_memory(thymio):
@@ -64,7 +64,7 @@ def run_ann_without_memory(thymio):
     constant_scale = 20
 
     # State for start and stop
-    state = 0
+    state = 1
 
     x = np.zeros(shape=(7,))
     y = np.zeros(shape=(2,))
@@ -72,18 +72,6 @@ def run_ann_without_memory(thymio):
     j = 0
     while True:
         j += 1
-
-        if thymio["button.center"] == 1 and state == 0:
-            state = 1
-            move()
-            print("moving!")
-            time.sleep(0.1)
-        elif thymio["button.center"] == 1 and state == 1:
-            state = 0
-            stop()
-            print("Stopping!")
-            time.sleep(0.1)
-
         if state != 0:
             # Get and scale inputs
             x = np.array(thymio["prox.horizontal"]) / sensor_scale
@@ -92,7 +80,9 @@ def run_ann_without_memory(thymio):
             y[0] = np.sum(x * w_l) + 100
             y[1] = np.sum(x * w_r) + 100
 
-            print(j, int(y[0]), int(y[1]), thymio["prox.horizontal"])
-            move(int(y[0]), int(y[1]))
-  
-  run_ann_without_memory(th)
+            #print(j, int(y[0]), int(y[1]), thymio["prox.horizontal"])
+            move(thymio,int(y[0]), int(y[1]))
+        if(all(sensorValues==0 for sensorValues in robotStatus.thymio["prox.horizontal"])):
+            stop(thymio)
+         return
+  #run_ann_without_memory(th)

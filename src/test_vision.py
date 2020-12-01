@@ -12,7 +12,6 @@ from skimage.feature import blob_doh
 
 
 offline = True
-fast = True
 Plot = False
 save = False
 
@@ -20,66 +19,79 @@ save = False
 
 def initialization():
     start = timeit.default_timer()
-    map_path_offline = r"C:\Users\Carl\Desktop\Project\Maps\map1.JPG"
+    map_path_offline = r"C:\Users\Carl\Desktop\Project\Maps\map4.JPG"
     map = cv2.imread(map_path_offline)
     corner_mask_path = r"C:\Users\Carl\Desktop\Project\mask_corner.JPG"
     mask = cv2.imread(corner_mask_path)
     dimension_paper = [118.9,84.1] #cm A0
-    dim = (int(dimension_paper[0]*2),int(dimension_paper[1]*2))
+    dim = (int(dimension_paper[1]*2),int(dimension_paper[0]*2))
     # Switching red and blue channels
     map[:, :, [0, 2]] = map[:, :, [2, 0]]
     mask[:, :, [0, 2]] = mask[:, :, [2, 0]]
-    if Plot:
-        plt.imshow(map)
-        plt.show()
-    corner_location = corner_detection(map,mask)
-    img_straighten = four_point_transform(map, corner_location)
-    if img_straighten.shape[0]>1000:
-        img_straighten = cv2.resize(img_straighten, dsize=((dim[0], int(img_straighten.shape[0]*dim[0]/img_straighten.shape[1]))))
 
-    img_straighten_grey = cv2.cvtColor(img_straighten, cv2.COLOR_RGB2GRAY)
-    coordinates_thymio, coordinates_endpoint = find_contours(img_straighten_grey, 0.001) #OR # obstacles = color_filtering(img_straighten,"black")
-    obstacles, thymio, end_point = clustering(img_straighten)
+    corner_location = corner_detection(map,mask)
+    img_straighten, M = four_point_transform(map, corner_location)
+    im_dim_new = (int(img_straighten.shape[0]*dim[0]/img_straighten.shape[1]),dim[0])
+    im_dim = img_straighten.shape
+    img_straighten_before_resize = img_straighten
+    img_straighten = cv2.resize(img_straighten, dsize=((dim[0], int(img_straighten.shape[0]*dim[0]/img_straighten.shape[1]))))
+
+    # TODO: CHECK IS THIS IS FAST ENOUGH WITH IMAGES FROM THE CAMERA WHEN TESTING. OTHERWISE, PUT IT BEFORE IMG_STRAIGHTEN AND CHANGE THE MASK
+
+    obstacles, thymio_coords_orientation, endpoint_coordinates = clustering(img_straighten) # Do this offline (before the path planning)
+    thymio_coord = get_thymio_info(map,M,im_dim_new,im_dim) # Do these online, and feed info to kalman filter
+    endpoint_coord = get_endpoint_info(map,M,im_dim_new,im_dim)
     if save:
         plt.imsave('obstacles.jpg',obstacles)
-    thymio_center_coord, thymio_orientation = orientation_location_thymio(img_straighten_grey, coordinates_thymio)
     modified_obstacles = process_obstacles(obstacles)
     stop = timeit.default_timer()
-
     print('Time: ', stop - start)
 
+def get_thymio_info(img,M,im_dim,dim): # if tranforming the image is faster, remove all inputs, feed img_straighten an remove tranformation line
+    thymio_map = color_filtering(img,"blue")
+    thymio_coords = end_point_start_point(thymio_map, 0.001, "thymio")
+    thymio_coord = tranformation_matrix(thymio_coords,M,im_dim,dim)
+    thymio_coord = [thymio_coord, thymio_coords[1]]
+    print("Thymio Coordinates + Orientation: ", thymio_coord)
+    return thymio_coord
 
+# or, if straightening the image is faster: (same for endpoint)
+# -----------------------------------------------
+# def get_thymio_info(img,mask): # if tranforming the image is faster, remove all inputs, feed img_straighten an remove tranformation line
+    # corner_location = corner_detection(map,mask)
+    # img_straighten, M = four_point_transform(map, corner_location)
+    # img_straighten = cv2.resize(img_straighten, dsize=((dim[0], int(img_straighten.shape[0]*dim[0]/img_straighten.shape[1]))))
+    # thymio_map = color_filtering(img_straighten,"blue")
+    # thymio_coords = end_point_start_point(thymio_map, 0.001, "thymio")
+    # print("Thymio Coordinates + Orientation: ", thymio_coord)
+    # return thymio_coord
 
+def get_endpoint_info(img,M,im_dim,dim): # if tranforming the image is faster, remove all inputs, feed img_straighten an remove tranformation line
+    endpoint_map = color_filtering(img,"green")
+    endpoint_coord = end_point_start_point(endpoint_map, 0.001, "endpoint")
+    endpoint_coord = tranformation_matrix(endpoint_coord,M,im_dim,dim)
+    print("Endpoint Coordinates: ", endpoint_coord)
+    return endpoint_coord
 
 def process_obstacles(img):
     output = np.copy(img)
     kernel = np.ones((3,3), np.uint8)
     output = cv2.erode(output, kernel, iterations=1)
     output = cv2.dilate(output, kernel, iterations=2)
+    output = cv2.erode(img,kernel,iterations = 3)
     if Plot:
         plt.imshow(output)
         plt.show()
     return output
 
-def clean_image(img):
-    output = np.copy(img)
-
-    return output
-
-def preprocessing(img):
-    # REMOVE BACKGROUND epic fail
-    output = np.copy(img)
-    blur = scipy.ndimage.gaussian_filter(output, sigma = 30.0)
-    bg_removed = output - blur
-    squared = bg_removed**2
-    squared_filt = scipy.ndimage.gaussian_filter(squared, sigma = 20.0)
-    squared_filt = np.sqrt(squared_filt)
-    squared_filt = squared_filt.astype(int)
-    squared_filt[squared_filt == 0] = 1
-    output = np.divide(bg_removed,squared_filt)
-
-    return output
-
+def tranformation_matrix(pt,M,im_dim,dim):
+    A = M[0:2,0:2];
+    b = M[0:2,2];
+    pt = pt[0][0:2]
+    tranformed_pt = np.matmul(A,pt) + b
+    x_new = tranformed_pt[0]*im_dim[0]/dim[0]
+    y_new = tranformed_pt[1]*im_dim[1]/dim[1]
+    return x_new,y_new
 
 def clustering(img):
     # reshape the image to a 2D array of pixels and 3 color values (RGB)
@@ -100,18 +112,15 @@ def clustering(img):
     end_point = np.copy(img)
     labels = labels.reshape(img.shape[0],img.shape[1])
     (values,counts) = np.unique(labels,return_counts=True)
-    garbage1_i,garbage2_i,obstacles_i,garbage3_i, thymio_garbage_i,endpoint_i, thymio_i = heapq.nlargest(7, range(len(counts)), key=counts.__getitem__)
+    _, obstacles_i, _, endpoint_i, thymio_i, _, corners_i = heapq.nlargest(7, range(len(counts)), key=counts.__getitem__)
 
-
-    end_point[labels != endpoint_i] = [255, 255, 255]
+    end_point[labels != endpoint_i] = [0, 0, 0]
     obstacles[labels != obstacles_i] = [255, 255, 255]
-    thymio[labels != thymio_i] = [255, 255, 255]
-
+    thymio[labels != thymio_i] = [0, 0, 0]
 
     end_point = cv2.fastNlMeansDenoisingColored(end_point,None,10,10,7,21)
     obstacles = cv2.fastNlMeansDenoisingColored(obstacles,None,10,10,7,21)
     thymio = cv2.fastNlMeansDenoisingColored(thymio,None,10,10,7,21)
-
     if Plot:
         plt.imshow(thymio)
         plt.show()
@@ -119,8 +128,12 @@ def clustering(img):
         plt.show()
         plt.imshow(end_point)
         plt.show()
-    return obstacles, thymio, end_point
-
+    thymio_coords_orientation = end_point_start_point(thymio,0.001,"thymio")
+    endpoint_coordinates = end_point_start_point(end_point,0.001,"endpoint")
+    print("Thymio Coordinates + orientation: ", thymio_coords_orientation)
+    print("Endpoint Coordinates: ", endpoint_coordinates)
+    obstacles = np.asarray(obstacles)
+    return obstacles, thymio_coords_orientation, endpoint_coordinates
 
 def order_points(pts):
     rect = np.zeros((4, 2), dtype = "float32")
@@ -131,7 +144,6 @@ def order_points(pts):
     rect[1] = pts[np.argmin(diff)]
     rect[3] = pts[np.argmax(diff)]
     return rect
-
 
 def four_point_transform(image, pts):
     rect = order_points(pts)
@@ -149,19 +161,17 @@ def four_point_transform(image, pts):
         [maxWidth - 1, 0],
         [maxWidth - 1, maxHeight - 1],
         [0, maxHeight - 1]], dtype = "float32")
-
     # compute the perspective transform matrix and then apply it
     M = cv2.getPerspectiveTransform(rect, dst)
+
     warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
     if Plot:
         plt.imshow(warped)
         plt.show()
     # return the warped image
-    return warped
+    return warped, M
 
-
-
-def corner_detection(img,mask): #TODO: Get mask of 1 and 0 instead of image mask
+def corner_detection(img,mask): #TODO (optional, depending on testing): Get mask of 1 and 0 instead of image mask
     large_image = np.copy(img)
     small_image = np.copy(mask)
     method = cv2.TM_SQDIFF_NORMED
@@ -196,25 +206,11 @@ def color_filtering(img,color):
         lower = np.array([90,0,0])
         upper = np.array([255,50,50])
     elif color == "blue":
-        lower = np.array([0,0,90])
-        upper = np.array([50,50,255])
+        lower = np.array([0,0,50])
+        upper = np.array([30,70,255])
     elif color == "green":
-        lower = np.array([0,90,0])
-        upper = np.array([50,255,50])
-    elif color == "green and blue":
-        lower_b = np.array([0,0,90])
-        upper_b = np.array([50,50,255])
-        lower_g = np.array([00,90,0])
-        upper_g = np.array([50,255,50])
-        color_mask_b = cv2.inRange(large_image, lower_b, upper_b)
-        color_mask_g = cv2.inRange(large_image, lower_g, upper_g)
-        large_image_b = cv2.bitwise_and(large_image, large_image, mask=color_mask_b)
-        large_image_g = cv2.bitwise_and(large_image, large_image, mask=color_mask_g)
-        large_image = large_image_b + large_image_g
-        return large_image
-    elif color == "purple":
-        lower = np.array([20,0,20])
-        upper = np.array([255,90,255])
+        lower = np.array([0,50,0])
+        upper = np.array([60,255,60])
     elif color == "black":
         large_image = cv2.cvtColor(large_image, cv2.COLOR_RGB2GRAY)
         _,output = cv2.threshold(large_image,10,255,cv2.THRESH_BINARY)
@@ -231,55 +227,58 @@ def color_filtering(img,color):
         plt.show()
     return large_image
 
-def find_contours(img,constant): # TODO: Apply this on the thymio and endpoint images only from the clustering
+def end_point_start_point(img,constant,point,clust=1):
     # obstacles = find_contours(img_straighten_grey, 0.001) #OR
-    img = img.astype(np.uint8)
-    _, threshold = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
-    contours,_ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    img_contours = np.zeros([img.shape[0],img.shape[1]])
-    largest_areas = sorted(contours, key=cv2.contourArea)
-    largest_areas = largest_areas[:-1] # remove sorted and [:-1] to get the corners and the outer borders too
-    # largest_areas = largest_areas[::-1]
-    largest_areas = largest_areas[:-3]
-    for cnt in largest_areas: # TODO: Find a thresholding way to remove everything and only keep the obstacles  largest_areas[:3]
-        approx = cv2.approxPolyDP(cnt, constant*cv2.arcLength(cnt, True), True)
-        cv2.drawContours(img_contours, [approx], 0, (255), thickness=cv2.FILLED) #  replace thickness=cv2.FILLED with thickness=5 for edges only
-        x = approx.ravel()[0]
-        y = approx.ravel()[1]
-    if Plot:
-        plt.imshow(img_contours)
-        plt.show()
-    coordinates_thymio = np.zeros((2,2))
-    coordinates_endpoint = np.zeros((1,2))
-    location_image = np.zeros([img.shape[0],img.shape[1]])
-    i = 0
+    output = np.copy(img) #copy the image
+    output_grey = cv2.cvtColor(output, cv2.COLOR_RGB2GRAY) # convert to gray
+    output_grey = output_grey.astype(np.uint8) #uint8 type to use as binary image
+    _, threshold = cv2.threshold(output_grey, 1, 255, cv2.THRESH_BINARY) # threshold and obtain 0 and 255 values only
+    contours,_ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) # find contours in the image
+    output_grey_contours = np.zeros([output_grey.shape[0],output_grey.shape[1]]) # get a placeholder image for the contours
+
+    largest_areas = sorted(contours, key=cv2.contourArea) # sort the contours from smallest to largest
+    if not clust: # if we are clustering, the outer boarder is removed automatically
+        largest_areas = largest_areas[:-1] # remove the outer border of the picture
+    largest_areas = largest_areas[::-1] # flip the array and make it largest to smallest
+    if (point == "thymio"):
+        largest_areas = largest_areas[:2] # keep only the two largest contours corresponding to the interesting parts (and remove the noisy outputs)
+        coordinates = np.zeros((2,2)) # place holder for the coordinates
+    elif(point == "endpoint"):
+        largest_areas = largest_areas[:1] # keep only the largest contour (endpoint)
+        coordinates = np.zeros((1,2)) # place holder for the coordinates
+    for cnt in largest_areas:
+        approx = cv2.approxPolyDP(cnt, constant*cv2.arcLength(cnt, True), True) # Approximate the contour(s)
+        cv2.drawContours(output_grey_contours, [approx], 0, (255), thickness=cv2.FILLED) #draw the contour(s) on the place holder  # replace thickness=cv2.FILLED with thickness=5 for edges only
+        x = approx.ravel()[0] # get x coordinate of contour point
+        y = approx.ravel()[1] # get y coordinate of contour point
+    location_image = np.zeros([output_grey.shape[0],output_grey.shape[1]]) # Place holder for the
+    i = 0 # index
     for c in largest_areas:
-
-        # calculate moments for each contour
-        M = cv2.moments(c)
-        # calculate x,y coordinate of center
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-
-        cv2.circle(location_image, (cX, cY), 5, (255, 255, 255), -1)
+        M = cv2.moments(c) # calculating moments for each contour, i.e center of the circle englobing the contours
+        cX = int(M["m10"] / M["m00"]) # calculate x coordinate of center
+        cY = int(M["m01"] / M["m00"]) # calculate y coordinate of center
+        cv2.circle(location_image, (cX, cY), 5, (255, 255, 255), -1) # Draw the circle englobing the contours
         if(i<2):
-            coordinates_thymio[i] = [cX, cY]
+            coordinates[i] = [cX, cY]
         else:
-            coordinates_endpoint = [cX, cY]
+            coordinates = [cX, cY]
         i = i + 1
     if Plot:
         plt.imshow(location_image)
         plt.show()
-    return coordinates_thymio, coordinates_endpoint
+    if (point == "thymio"):
+        thymio_center_coord, thymio_orientation = orientation_location_thymio(output_grey, coordinates) # Get coordinates and orientation of the center of the thymio
+        coords = [thymio_center_coord, thymio_orientation] # Concatinate into one variable
+    elif(point == "endpoint"):
+        coords = coordinates # No need to do further action. The center of the circle englobing the endpoint is the center of the endpoint
+    return coords
 
 def orientation_location_thymio(img,coordinates_thymio):
 
-    center_thymio = [(coordinates_thymio[0][1] + coordinates_thymio[1][1])/2, (coordinates_thymio[0][0]+coordinates_thymio[1][0])/2]
-    img_x,img_y = img.shape[:2]
-    orientation_rad = np.arctan2(img_y-center_thymio[1], img_x-center_thymio[0])
-    print(orientation_rad)
-    orientation_deg = orientation_rad*180/math.pi
-    print(center_thymio, orientation_deg)
+    center_thymio = [(coordinates_thymio[0][0]+coordinates_thymio[1][0])/2, (coordinates_thymio[0][1] + coordinates_thymio[1][1])/2] # Getting x and y of image
+    img_x,img_y = img.shape[:2] # x and y dimentions of the image
+    orientation_rad = np.arctan2(img_y-center_thymio[0], img_x-center_thymio[1]) # get angle with point (0,1), TODO: We have a constant offset of 8 degrees?? wurrup wid dat bish?
+    orientation_deg = orientation_rad*180/math.pi # convert rad to degree
     return center_thymio, orientation_deg
 
 
@@ -294,7 +293,7 @@ if __name__ == "__main__":
 # def blob_detection(image,dim):
     # output = np.copy(image)
     # image_gray = cv2.cvtColor(output, cv2.COLOR_RGB2GRAY)
-    # blobs = blob_doh(image_gray, max_sigma=20, threshold=.01) # TODO: FIND more robust solution
+    # blobs = blob_doh(image_gray, max_sigma=20, threshold=.01) # FIND more robust solution
     # x,y,r = [],[],[]
     # for blob in blobs:
     #         ytemp, xtemp, rtemp = blob
@@ -325,7 +324,7 @@ if __name__ == "__main__":
     # plt.show()
     # print(x,y,r)
     #
-    #     #TODO recognize which circles are of thymio (get it from distance of circles and overlapping circles)
+    #
     #
     # return 0
 
@@ -371,3 +370,20 @@ if __name__ == "__main__":
 # map[int(corner_location[1,0]),int(corner_location[1,1])] = [0,50,255]
 # map[int(corner_location[2,0]),int(corner_location[2,1])] = [0,50,255]
 # map[int(corner_location[3,0]),int(corner_location[3,1])] = [0,50,255]
+
+
+
+
+# def preprocessing(img):
+#     # REMOVE BACKGROUND epic fail
+#     output = np.copy(img)
+#     blur = scipy.ndimage.gaussian_filter(output, sigma = 30.0)
+#     bg_removed = output - blur
+#     squared = bg_removed**2
+#     squared_filt = scipy.ndimage.gaussian_filter(squared, sigma = 20.0)
+#     squared_filt = np.sqrt(squared_filt)
+#     squared_filt = squared_filt.astype(int)
+#     squared_filt[squared_filt == 0] = 1
+#     output = np.divide(bg_removed,squared_filt)
+#
+#     return output
