@@ -63,7 +63,7 @@ class pathPlaning:
             self.__goalP=np.around(np.divide(goal,self.__CMPerPixel))
             self.__goalP=self.__goalP.astype(int)
             if(self.__goalP[0]>=self.__mapDimensions[0] or self.__goalP[1]>=self.__mapDimensions[1] or self.__goalP[0]<0 or self.__goalP[1]<0):
-                raise Exception('Goal outside Map')
+                raise Exception('Goal outside Map',self.__goalP[0],self.__goalP[1])
             if(self.__map[self.__goalP[0], self.__goalP[1]]==self.__occupancyMarkerMap):
                 raise Exception('goal node is not traversable')
             self.__generateGradient()

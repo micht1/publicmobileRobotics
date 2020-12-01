@@ -84,5 +84,5 @@ def run_ann_without_memory(thymio):
             move(thymio,int(y[0]), int(y[1]))
         if(all(sensorValues==0 for sensorValues in robotStatus.thymio["prox.horizontal"])):
             stop(thymio)
-         return
+            return
   #run_ann_without_memory(th)

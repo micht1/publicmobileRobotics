@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 import timeit
 from skimage.feature import blob_doh
 
-Plot = False
+Plot = True
 save = False
 
 # TODO: say that you cant anything (camera covered)
@@ -238,7 +238,47 @@ def orientation_location_thymio(img,coordinates_thymio):
     orientation_rad = np.arctan2(img_y-center_thymio[0], img_x-center_thymio[1]) # get angle with point (0,1), TODO: We have a constant offset of 8 degrees?? wurrup wid dat bish?
     orientation_deg = orientation_rad*180/math.pi # convert rad to degree
     return center_thymio, orientation_deg
+    
+def region_growing(image, seed):
+    list_p = []
+    outimg = np.zeros_like(image)
+    list_p.append((seed[0], seed[1]))
+    i=0
+    while len(list_p):
+        if len(list_p)<1:
+            print('hi')
+            break
+        pix = list_p[0]
+        outimg[pix[0], pix[1]] = 255
+        for coord in get8n(pix[0], pix[1], image.shape):
 
+            if abs((int(image[coord[0], coord[1]])))>100 and outimg[coord[0], coord[1]]<255:
+                outimg[coord[0], coord[1]] = 255
+                list_p.append((coord[0], coord[1]))
+        list_p.pop(0)
+        i=i+1
+    return outimg
+
+
+def get8n(y, x, shape):
+    out = []
+    if y-1 > 0 and x-1 > 0:
+        out.append( (y-1, x-1) )
+    if y-1 > 0 :
+        out.append( (y-1, x))
+    if y-1 > 0 and x+1 < shape[1]:
+        out.append( (y-1, x+1))
+    if x-1 > 0:
+        out.append( (y, x-1))
+    if x+1 < shape[1]:
+        out.append( (y, x+1))
+    if y+1 < shape[0] and x-1 > 0:
+        out.append( ( y+1, x-1))
+    if y+1 < shape[0] :
+        out.append( (y+1, x))
+    if y+1 < shape[0] and x+1 < shape[1]:
+        out.append( (y+1, x+1))
+    return out
 
 
 if __name__ == "__main__":

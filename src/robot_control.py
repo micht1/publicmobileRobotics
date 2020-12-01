@@ -144,7 +144,7 @@ if plot:
     line1, = ax.plot(p[0],p[1])
     plt.xlim(-50, 50)
     plt.ylim(-50, 50)
-
+""
 # control
 while np.size(path):
     time.sleep(Tw)
@@ -180,3 +180,4 @@ th.set_var("motor.left.target", 0)
 th.set_var("motor.right.target", 0)
 time.sleep(1)
 quit()
+""
