@@ -12,41 +12,48 @@ sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
 from Thymio import Thymio
 from tqdm import tqdm
 
+#const definition
+SPEED = 150
+MAX_SPEED = 500
+
 #variables definition
 Ts = 0.1
 Tw = 0.00
 forward = 0
 p = np.array([0,0,0])
+delta_p = np.array([[0],[0],[0]])
 trace_x = []
 trace_y = []
 plot = False
 ######################## TEST PATHS #############################
 #sine
-x_axis = np.arange(0,50,5)
-amplitude = 5*np.sin(x_axis/5)
-path = np.array([x_axis,amplitude])
+# x_axis = np.arange(0,50,5)
+# amplitude = 5*np.sin(x_axis/5)
+# path = np.array([x_axis,amplitude])
 #10cm square
-#path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
-# straight line
+path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
+#straight line
 #path = np.array([[0,60],[0,0]])
-plt.plot(x_axis, amplitude)
+#################################################################
+
+#show path
+plt.plot(path)
 plt.show()
-#const definition
-SPEED = 150
-MAX_SPEED = 500
 
 t = np.array([0,0], dtype = 'float64')
 
-def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315):
+def odometry(p, delta_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315):
 
     #get elapsed time and wheels speed
     t[1] = time.time()
+
     if t[0] == 0:
-        T = 0
+        T = 1e-6
     else:
         T = np.float32(t[1]-t[0])
-    print(T)
+
     t[0] = time.time()
+    print(T)
 
     speed_l = th["motor.left.speed"]
     speed_r = th["motor.right.speed"]
@@ -60,7 +67,6 @@ def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315):
     # compute wheel displacement
     ds_l = T*speed_l*CALIB
     ds_r = T*speed_r*CALIB
-    
     #compute displacement
     ds = 0.5*(ds_r + ds_l)
     d_theta = (ds_r - ds_l)/B
@@ -71,8 +77,30 @@ def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315):
     # set robot angle to 0 deg if it has made one full turn
     if p[2] >= 2*math.pi:
         p[2] = 0
+
+    #compute odometry uncertainty, for more info see the paper 
+    #"General solution for linearized systematic error propagation in vehicle odometry", chapter 5.1
+    alpha_l = 1e-3
+    alpha_r = 1e-3
+    alpha = (alpha_r + alpha_l)/2
+    beta = alpha_r - alpha_l
+
+    A = np.array([[math.cos(p[2]),  -dy],
+                 [math.sin(p[2]),   dx],
+                 [0,                1]])
+    B = np.array([[alpha, beta*B/4],
+                 [beta/B, alpha]])
+
+    C = np.array([[ds/T],[d_theta/T]])
+
+    D = np.matmul(A,B)
+
+    Ddelta_p = np.matmul(D,C)
+
+    delta_p = delta_p + Ddelta_p
+    print("detla p", delta_p)
     
-    return p,t
+    return p, delta_p, t
 
 def popcol(my_array,pc):
     """ column popping in numpy arrays
@@ -143,8 +171,10 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
     #     th.set_var("motor.right.target", 2**16 - SPEED)
     #######################################################
 
+    #compute wheel speed speed
     left_wheel_speed = forward_speed - rotation_speed
     right_wheel_speed = forward_speed + rotation_speed
+    #convert to integer
     left_wheel_speed = np.int16(left_wheel_speed)
     right_wheel_speed = np.int16(right_wheel_speed)
 
@@ -158,10 +188,7 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
     if right_wheel_speed < - MAX_SPEED:
         right_wheel_speed = - MAX_SPEED
 
-    print('err_angle ', err_angle)
-    print('forward speed ', forward_speed)
-    print('rotation_speed', rotation_speed)
-    print('left speed ', left_wheel_speed)
+    #assign speed to wheel and manage negative values
     if left_wheel_speed < 0:
         th.set_var("motor.left.target", 2**16 + left_wheel_speed)
     else:
@@ -189,11 +216,11 @@ if plot:
     line1, = ax.plot(p[0],p[1])
     plt.xlim(-50, 50)
     plt.ylim(-50, 50)
-""
+
 # control
 while np.size(path):
     time.sleep(Tw)
-    p,t = odometry(p, t, MAX_SPEED)
+    p, delta_p, t = odometry(p, delta_p, t, MAX_SPEED)
     p, path = path_following(p, path)
 
     if plot:
@@ -225,4 +252,3 @@ th.set_var("motor.left.target", 0)
 th.set_var("motor.right.target", 0)
 time.sleep(1)
 quit()
-""
