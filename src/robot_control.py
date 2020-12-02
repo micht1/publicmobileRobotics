@@ -14,21 +14,30 @@ from tqdm import tqdm
 
 #variables definition
 Ts = 0.1
-Tw = 0.05
+Tw = 0.00
 forward = 0
 p = np.array([0,0,0])
 trace_x = []
 trace_y = []
 plot = False
-path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
-
+######################## TEST PATHS #############################
+#sine
+x_axis = np.arange(0,50,5)
+amplitude = 5*np.sin(x_axis/5)
+path = np.array([x_axis,amplitude])
+#10cm square
+#path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
+# straight line
+#path = np.array([[0,60],[0,0]])
+plt.plot(x_axis, amplitude)
+plt.show()
 #const definition
-SPEED = 100
+SPEED = 150
 MAX_SPEED = 500
 
 t = np.array([0,0], dtype = 'float64')
 
-def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.035):
+def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315):
 
     #get elapsed time and wheels speed
     t[1] = time.time()
@@ -60,8 +69,8 @@ def odometry(p, t, MAX_SPEED, B = 9.5, CALIB = 0.035):
     dp = np.array([dx, dy, d_theta])
     p = p + dp
     # set robot angle to 0 deg if it has made one full turn
-    #if p[2] >= 2*math.pi:
-    #    p[2] = 0
+    if p[2] >= 2*math.pi:
+        p[2] = 0
     
     return p,t
 
@@ -69,7 +78,7 @@ def popcol(my_array,pc):
     """ column popping in numpy arrays
     Input: my_array: NumPy array, pc: column index to pop out
     Output: [new_array,popped_col] """
-    print('WAYPOINT REACHED')
+    print('---------------------------------------------------------WAYPOINT REACHED')
     i = pc
     pop = my_array[:,i]
     new_array = np.hstack((my_array[:,:i],my_array[:,i+1:]))
@@ -88,8 +97,10 @@ def path_following(p, path, THREASHOLD = 0.5):
     #relative error with robot orientation
     err_angle = waypoint_ang - p[2]
     #if the error angle if above 180° turn the other way
-    if math.fabs(err_angle) > math.pi:
-        err_angle = - (2*math.pi - err_angle)
+    if err_angle > math.pi:
+        err_angle = err_angle - 2*math.pi
+    if err_angle < - math.pi:
+        err_angle = 2*math.pi + err_angle
 
     #print some variables
     print('position:         ', p)
@@ -113,20 +124,54 @@ def path_following(p, path, THREASHOLD = 0.5):
 
     return p, path
 
-def speed_regulation(waypoint_dist, err_angle, FORWARD_THREASHOLD = 0.1):
+def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD = 0.1):
 
-    ############## sequencial regulation #################
-    # separated turn and forward displacement
-    if math.fabs(err_angle) <= FORWARD_THREASHOLD:
-        th.set_var("motor.left.target", SPEED)
-        th.set_var("motor.right.target", SPEED)
-    if err_angle > FORWARD_THREASHOLD:
-        th.set_var("motor.left.target", 2**16 - SPEED)
-        th.set_var("motor.right.target", SPEED)
-    if err_angle < (-1*FORWARD_THREASHOLD):
-        th.set_var("motor.left.target", SPEED)
-        th.set_var("motor.right.target", 2**16 - SPEED)
+    ############## regulation #################
+    ############## Proportional control
+    forward_speed = K/4/(10*math.fabs(err_angle)+1)
+    rotation_speed = err_angle*K/2
+
+    ############## separated turn and forward displacement
+    # if math.fabs(err_angle) <= FORWARD_THREASHOLD:
+    #     th.set_var("motor.left.target", SPEED)
+    #     th.set_var("motor.right.target", SPEED)
+    # if err_angle > FORWARD_THREASHOLD:
+    #     th.set_var("motor.left.target", 2**16 - SPEED)
+    #     th.set_var("motor.right.target", SPEED)
+    # if err_angle < (-1*FORWARD_THREASHOLD):
+    #     th.set_var("motor.left.target", SPEED)
+    #     th.set_var("motor.right.target", 2**16 - SPEED)
     #######################################################
+
+    left_wheel_speed = forward_speed - rotation_speed
+    right_wheel_speed = forward_speed + rotation_speed
+    left_wheel_speed = np.int16(left_wheel_speed)
+    right_wheel_speed = np.int16(right_wheel_speed)
+
+    #Saturate speed
+    if left_wheel_speed > MAX_SPEED:
+        left_wheel_speed = MAX_SPEED
+    if left_wheel_speed < - MAX_SPEED:
+        left_wheel_speed = - MAX_SPEED
+    if right_wheel_speed > MAX_SPEED:
+        right_wheel_speed = MAX_SPEED
+    if right_wheel_speed < - MAX_SPEED:
+        right_wheel_speed = - MAX_SPEED
+
+    print('err_angle ', err_angle)
+    print('forward speed ', forward_speed)
+    print('rotation_speed', rotation_speed)
+    print('left speed ', left_wheel_speed)
+    if left_wheel_speed < 0:
+        th.set_var("motor.left.target", 2**16 + left_wheel_speed)
+    else:
+        th.set_var("motor.left.target", left_wheel_speed)
+    if right_wheel_speed < 0:
+        th.set_var("motor.right.target", 2**16 + right_wheel_speed)
+    else:
+        th.set_var("motor.right.target", right_wheel_speed)
+
+
 
 th = Thymio.serial(port="COM6", refreshing_rate=Ts)
 
