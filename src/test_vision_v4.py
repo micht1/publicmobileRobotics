@@ -293,7 +293,7 @@ def end_point_start_point(img,constant,point,clust=1):
         plt.show()
     return coordinates
 
-def orientation_location_thymio(smallpt, bigpt):
+def orientation_location_thymio(bigpt,smallpt):
 
     center_thymio = [(bigpt[0]+smallpt[0])/2, (bigpt[1] + smallpt[1])/2] # Getting x and y of image
     slope = (bigpt[1]-smallpt[1])/(-bigpt[0]+smallpt[0])
