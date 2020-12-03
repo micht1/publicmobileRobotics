@@ -13,15 +13,16 @@ from Thymio import Thymio
 from tqdm import tqdm
 
 #const definition
-SPEED = 150
+SPEED = 200
 MAX_SPEED = 500
 
 #variables definition
 Ts = 0.1
-Tw = 0.00
+Tw = 0.05
 forward = 0
-p = np.array([0,0,0])
-delta_p = np.array([[0],[0],[0]])
+p = np.zeros(3)
+#delta_p = np.array([[0],[0],[0]])
+Sigma_prim = np.zeros((3,3))
 trace_x = []
 trace_y = []
 plot = False
@@ -31,18 +32,18 @@ plot = False
 # amplitude = 5*np.sin(x_axis/5)
 # path = np.array([x_axis,amplitude])
 #10cm square
-path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
+#path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
 #straight line
-#path = np.array([[0,60],[0,0]])
+path = np.array([[0,60],[0,0]])
 #################################################################
 
 #show path
-plt.plot(path)
-plt.show()
+# plt.plot(path)
+# plt.show()
 
 t = np.array([0,0], dtype = 'float64')
 
-def odometry(p, delta_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315):
+def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,2))):
 
     #get elapsed time and wheels speed
     t[1] = time.time()
@@ -78,29 +79,47 @@ def odometry(p, delta_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315):
     if p[2] >= 2*math.pi:
         p[2] = 0
 
-    #compute odometry uncertainty, for more info see the paper 
-    #"General solution for linearized systematic error propagation in vehicle odometry", chapter 5.1
-    alpha_l = 1e-3
-    alpha_r = 1e-3
-    alpha = (alpha_r + alpha_l)/2
-    beta = alpha_r - alpha_l
+    ####################### ERROR ON ODOMETRY ###########################
 
-    A = np.array([[math.cos(p[2]),  -dy],
-                 [math.sin(p[2]),   dx],
-                 [0,                1]])
-    B = np.array([[alpha, beta*B/4],
-                 [beta/B, alpha]])
+    ### compute odometry uncertainty, for more info see the paper:
+    ### "General solution for linearized systematic error propagation in vehicle odometry", chapter 5.1
+    # alpha_l = 1e-3
+    # alpha_r = 1e-3
+    # alpha = (alpha_r + alpha_l)/2
+    # beta = alpha_r - alpha_l
 
-    C = np.array([[ds/T],[d_theta/T]])
+    # A = np.array([[math.cos(p[2]),  -dy],
+    #              [math.sin(p[2]),   dx],
+    #              [0,                1]])
+    # B = np.array([[alpha, beta*B/4],
+    #              [beta/B, alpha]])
 
-    D = np.matmul(A,B)
+    # C = np.array([[ds/T],[d_theta/T]])
 
-    Ddelta_p = np.matmul(D,C)
+    # D = np.matmul(A,B)
 
-    delta_p = delta_p + Ddelta_p
-    print("detla p", delta_p)
+    # Ddelta_p = np.matmul(D,C)
+
+    # delta_p = delta_p + Ddelta_p
+    # print("detla p", delta_p)
+
+    ### standard deviation covarance matrix, see slide 21, lesson 6 of BMR
+    k = 2e-2
+    sigma_delta = np.array([[k*math.fabs(ds_r), 0                ], 
+                            [0                , k*math.fabs(ds_l)]])
+    c = math.cos(p[2] + d_theta/2)
+    s = math.sin(p[2] + d_theta/2)
+    J = np.array([[(1 + ds_l)/2*c + (ds_r + ds_l)*(1 - ds_l)/4*s, (ds_r + 1)/2*c + (ds_r + ds_l)*(ds_r - 1)/4*s, 1, 0, 0], 
+                  [(1 + ds_l)/2*s - (ds_r + ds_l)*(1 - ds_l)/4*c, (ds_r + 1)/2*s - (ds_r + ds_l)*(ds_r - 1)/4*c, 0, 1, 0], 
+                  [(1 - ds_l)/2                                 , (ds_r - 1)/2                             , 0, 0, 1]])
+    Sigma = np.asarray(np.bmat([[sigma_p, Z], [np.transpose(Z), sigma_delta]]))
+    D = np.matmul(J, Sigma)
+    Sigma_prim = np.matmul(D, np.transpose(J))
+    print("Sigma_prim", Sigma_prim)
+
+    #######################################################################
     
-    return p, delta_p, t
+    return p, Sigma_prim, t
 
 def popcol(my_array,pc):
     """ column popping in numpy arrays
@@ -117,6 +136,7 @@ def path_following(p, path, THREASHOLD = 0.5):
     waypoint = path[:,0]
 
     ############### WAYPOINT METRICS ##################
+
     waypoint_dir = waypoint-[p[0],p[1]]
     #robot-->waypoint distance
     waypoint_dist = math.sqrt(sum(waypoint_dir**2))
@@ -138,6 +158,7 @@ def path_following(p, path, THREASHOLD = 0.5):
     print('waypoint angle:   ', waypoint_ang)
     print('error angle:      ', err_angle)
     print("\n")
+
     ###################################################
 
     #if the waypoint is reached, returns popped path and next waypoint
@@ -154,12 +175,13 @@ def path_following(p, path, THREASHOLD = 0.5):
 
 def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD = 0.1):
 
-    ############## regulation #################
-    ############## Proportional control
-    forward_speed = K/4/(10*math.fabs(err_angle)+1)
+    ################### regulation #####################
+    
+    ### Proportional control
+    forward_speed = K/3/(5*math.fabs(err_angle)+1)
     rotation_speed = err_angle*K/2
-
-    ############## separated turn and forward displacement
+    
+    ### separated turn and forward displacement
     # if math.fabs(err_angle) <= FORWARD_THREASHOLD:
     #     th.set_var("motor.left.target", SPEED)
     #     th.set_var("motor.right.target", SPEED)
@@ -169,7 +191,8 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
     # if err_angle < (-1*FORWARD_THREASHOLD):
     #     th.set_var("motor.left.target", SPEED)
     #     th.set_var("motor.right.target", 2**16 - SPEED)
-    #######################################################
+    
+    #####################################################
 
     #compute wheel speed speed
     left_wheel_speed = forward_speed - rotation_speed
@@ -220,7 +243,7 @@ if plot:
 # control
 while np.size(path):
     time.sleep(Tw)
-    p, delta_p, t = odometry(p, delta_p, t, MAX_SPEED)
+    p, Sigma_prim, t = odometry(p, Sigma_prim, t, MAX_SPEED)
     p, path = path_following(p, path)
 
     if plot:
