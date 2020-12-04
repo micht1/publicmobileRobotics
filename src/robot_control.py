@@ -14,15 +14,15 @@ from tqdm import tqdm
 
 #const definition
 SPEED = 200
-MAX_SPEED = 400
+MAX_SPEED = 500
 
 #variables definition
 Ts = 0.1
 Tw = 0.05
-#forward = 0
-#p = np.zeros(3)
+forward = 0
+p = np.zeros(3)
 #delta_p = np.array([[0],[0],[0]])
-#Sigma_prim = np.zeros((3,3))
+Sigma_prim = np.zeros((3,3))
 trace_x = []
 trace_y = []
 plot = False
@@ -41,7 +41,7 @@ path = np.array([[0,60],[0,0]])
 # plt.plot(path)
 # plt.show()
 
-#t = np.array([0,0], dtype = 'float64')
+t = np.array([0,0], dtype = 'float64')
 
 def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,2))):
 
@@ -54,7 +54,7 @@ def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,
         T = np.float32(t[1]-t[0])
 
     t[0] = time.time()
-    #print(T)
+    print(T)
 
     speed_l = th["motor.left.speed"]
     speed_r = th["motor.right.speed"]
@@ -75,33 +75,11 @@ def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,
     dy = - ds*math.sin(p[2] + d_theta/2)
     dp = np.array([dx, dy, d_theta])
     p = p + dp
-    # set robot angle to 0 deg if it has made one full turn
-    if p[2] >= 2*math.pi:
-        p[2] = 0
-
-    ####################### ERROR ON ODOMETRY ###########################
-
-    ### compute odometry uncertainty, for more info see the paper:
-    ### "General solution for linearized systematic error propagation in vehicle odometry", chapter 5.1
-    # alpha_l = 1e-3
-    # alpha_r = 1e-3
-    # alpha = (alpha_r + alpha_l)/2
-    # beta = alpha_r - alpha_l
-
-    # A = np.array([[math.cos(p[2]),  -dy],
-    #              [math.sin(p[2]),   dx],
-    #              [0,                1]])
-    # B = np.array([[alpha, beta*B/4],
-    #              [beta/B, alpha]])
-
-    # C = np.array([[ds/T],[d_theta/T]])
-
-    # D = np.matmul(A,B)
-
-    # Ddelta_p = np.matmul(D,C)
-
-    # delta_p = delta_p + Ddelta_p
-    #print("detla p", delta_p)
+    # bound the robot orientation between [-pi , pi]
+    if p[2] > math.pi:
+        p[2] = p[2] - 2*math.pi
+    if p[2] < - math.pi:
+        p[2] = p[2] + 2*math.pi
 
     ### standard deviation covarance matrix, see slide 21, lesson 6 of BMR
     k = 2e-2
@@ -115,8 +93,8 @@ def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,
     Sigma = np.asarray(np.bmat([[sigma_p, Z], [np.transpose(Z), sigma_delta]]))
     D = np.matmul(J, Sigma)
     Sigma_prim = np.matmul(D, np.transpose(J))
-    #print("Sigma_prim", Sigma_prim)
-    #print("P:",p)
+    print("Sigma_prim", Sigma_prim)
+
     #######################################################################
     
     return p, Sigma_prim, t
@@ -131,7 +109,7 @@ def popcol(my_array,pc):
     new_array = np.hstack((my_array[:,:i],my_array[:,i+1:]))
     return [new_array,pop]
 
-def path_following(p, path, THREASHOLD = 0.8):
+def path_following(p, path, THREASHOLD = 0.5):
     
     waypoint = path[:,0]
 
@@ -151,7 +129,6 @@ def path_following(p, path, THREASHOLD = 0.8):
         err_angle = 2*math.pi + err_angle
 
     #print some variables
-    """
     print('position:         ', p)
     print('waypoint:         ', waypoint)
     print('waypoint dir:     ', waypoint_dir)
@@ -159,7 +136,7 @@ def path_following(p, path, THREASHOLD = 0.8):
     print('waypoint angle:   ', waypoint_ang)
     print('error angle:      ', err_angle)
     print("\n")
-    """
+
     ###################################################
 
     #if the waypoint is reached, returns popped path and next waypoint
@@ -167,12 +144,10 @@ def path_following(p, path, THREASHOLD = 0.8):
         path, waypoint = popcol(path, 0)
         #if the robot has reached the goal, exit
         if np.size(path) == 0:
-            th.set_var("motor.right.target", 0)
-            th.set_var("motor.left.target", 0)
             print('GOAL REACHED')
             return p, path  
-    else:
-        speed_regulation(waypoint_dist, err_angle)
+
+    speed_regulation(waypoint_dist, err_angle)
 
     return p, path
 
@@ -182,7 +157,7 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
     
     ### Proportional control
     forward_speed = K/3/(5*math.fabs(err_angle)+1)
-    rotation_speed = err_angle*K/3
+    rotation_speed = err_angle*K/2
     
     ### separated turn and forward displacement
     # if math.fabs(err_angle) <= FORWARD_THREASHOLD:
@@ -224,7 +199,7 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
     else:
         th.set_var("motor.right.target", right_wheel_speed)
 
-"""
+
 
 th = Thymio.serial(port="COM6", refreshing_rate=Ts)
 
@@ -278,4 +253,3 @@ th.set_var("motor.left.target", 0)
 th.set_var("motor.right.target", 0)
 time.sleep(1)
 quit()
-"""
