@@ -1,0 +1,360 @@
+Camera Estimate: [79.40136642 50.77452329  1.55023477]
+leftmotor: 0
+rightmotor: 0
+Camera Estimate: [79.40136642 50.77452329  1.55023477]
+leftmotor: 0
+rightmotor: 0
+Camera Estimate: [79.40136642 50.77452329  1.55023477]
+leftmotor: 0
+rightmotor: 0
+Camera Estimate: [79.40325333 50.68154405  1.55023477]
+leftmotor: 122
+rightmotor: 65477
+Camera Estimate: [79.40325333 50.68154405  1.55023477]
+leftmotor: 123
+rightmotor: 65473
+Camera Estimate: [79.78000728 50.59380308  1.42337676]
+leftmotor: 122
+rightmotor: 65466
+Camera Estimate: [79.78000728 50.59380308  1.42337676]
+leftmotor: 112
+rightmotor: 65465
+Camera Estimate: [80.15676123 50.5060621   1.2326652 ]
+leftmotor: 103
+rightmotor: 65490
+Camera Estimate: [80.15676123 50.5060621   1.2326652 ]
+leftmotor: 103
+rightmotor: 65490
+Camera Estimate: [80.72094869 50.42094026  1.1067549 ]
+leftmotor: 102
+rightmotor: 65519
+Camera Estimate: [80.72094869 50.42094026  1.1067549 ]
+leftmotor: 102
+rightmotor: 65519
+Camera Estimate: [81.09958956 50.24022005  0.97133572]
+leftmotor: 91
+rightmotor: 0
+Camera Estimate: [81.09958956 50.24022005  0.97133572]
+leftmotor: 95
+rightmotor: 0
+Camera Estimate: [81.47823042 50.05949983  0.88693815]
+leftmotor: 99
+rightmotor: 25
+Camera Estimate: [81.47823042 50.05949983  0.88693815]
+leftmotor: 97
+rightmotor: 39
+Camera Estimate: [81.95624879 49.60115146  0.84407433]
+leftmotor: 124
+rightmotor: 82
+Camera Estimate: [81.95624879 49.60115146  0.84407433]
+leftmotor: 124
+rightmotor: 82
+Camera Estimate: [82.52987082 49.05113341  0.84407433]
+leftmotor: 113
+rightmotor: 118
+Camera Estimate: [82.52987082 49.05113341  0.84407433]
+leftmotor: 113
+rightmotor: 118
+Camera Estimate: [83.20098345 48.31646644  0.82116606]
+leftmotor: 144
+rightmotor: 106
+Camera Estimate: [83.20098345 48.31646644  0.82116606]
+leftmotor: 112
+rightmotor: 89
+Camera Estimate: [83.96581284 47.58310904  0.82116606]
+leftmotor: 137
+rightmotor: 134
+Camera Estimate: [83.96581284 47.58310904  0.82116606]
+leftmotor: 137
+rightmotor: 134
+Camera Estimate: [84.63692546 46.84844208  0.84407433]
+leftmotor: 149
+rightmotor: 130
+Camera Estimate: [84.63692546 46.84844208  0.84407433]
+leftmotor: 149
+rightmotor: 130
+Camera Estimate: [85.49924543 45.93043576  0.82116606]
+leftmotor: 113
+rightmotor: 118
+Camera Estimate: [85.49924543 45.93043576  0.82116606]
+leftmotor: 123
+rightmotor: 135
+Camera Estimate: [86.0766413  45.19445923  0.82116606]
+leftmotor: 130
+rightmotor: 118
+Camera Estimate: [86.0766413  45.19445923  0.82116606]
+leftmotor: 133
+rightmotor: 134
+Camera Estimate: [86.93707436 44.36943216  0.82397902]
+leftmotor: 118
+rightmotor: 130
+Camera Estimate: [86.93707436 44.36943216  0.82397902]
+leftmotor: 118
+rightmotor: 130
+Camera Estimate: [87.79750742 43.54440509  0.82116606]
+leftmotor: 122
+rightmotor: 120
+Camera Estimate: [87.79750742 43.54440509  0.82116606]
+leftmotor: 122
+rightmotor: 120
+Camera Estimate: [88.56422372 42.71806845  0.80096913]
+leftmotor: 136
+rightmotor: 123
+Camera Estimate: [88.56422372 42.71806845  0.80096913]
+leftmotor: 145
+rightmotor: 130
+Camera Estimate: [89.33094002 41.89173181  0.82116606]
+leftmotor: 128
+rightmotor: 118
+Camera Estimate: [89.33094002 41.89173181  0.82116606]
+leftmotor: 104
+rightmotor: 133
+Camera Estimate: [89.90833589 41.15575527  0.82116606]
+leftmotor: 135
+rightmotor: 134
+Camera Estimate: [89.90833589 41.15575527  0.82116606]
+leftmotor: 135
+rightmotor: 134
+Camera Estimate: [90.6769391  40.23643939  0.82116606]
+leftmotor: 132
+rightmotor: 127
+Camera Estimate: [90.6769391  40.23643939  0.82116606]
+leftmotor: 132
+rightmotor: 127
+Camera Estimate: [91.44554231 39.31712351  0.82116606]
+leftmotor: 147
+rightmotor: 123
+Camera Estimate: [91.44554231 39.31712351  0.82116606]
+leftmotor: 120
+rightmotor: 129
+Camera Estimate: [92.2103717  38.58376611  0.82116606]
+leftmotor: 129
+rightmotor: 121
+Camera Estimate: [92.2103717  38.58376611  0.82116606]
+leftmotor: 129
+rightmotor: 121
+Camera Estimate: [92.97897491 37.66445023  0.82116606]
+leftmotor: 131
+rightmotor: 128
+Camera Estimate: [92.97897491 37.66445023  0.82116606]
+leftmotor: 131
+rightmotor: 128
+Camera Estimate: [93.74569121 36.83811359  0.84048928]
+leftmotor: 124
+rightmotor: 117
+Camera Estimate: [93.74569121 36.83811359  0.84048928]
+leftmotor: 124
+rightmotor: 117
+Camera Estimate: [94.51240751 36.01177695  0.82116606]
+leftmotor: 138
+rightmotor: 117
+Camera Estimate: [94.51240751 36.01177695  0.82116606]
+leftmotor: 125
+rightmotor: 106
+Camera Estimate: [95.08980338 35.27580042  0.82116606]
+leftmotor: 137
+rightmotor: 117
+Camera Estimate: [95.08980338 35.27580042  0.82116606]
+leftmotor: 137
+rightmotor: 117
+Camera Estimate: [95.85651968 34.44946378  0.84048928]
+leftmotor: 96
+rightmotor: 116
+Camera Estimate: [95.85651968 34.44946378  0.84048928]
+leftmotor: 96
+rightmotor: 116
+Camera Estimate: [96.52763231 33.71479682  0.86326539]
+leftmotor: 112
+rightmotor: 93
+Camera Estimate: [96.52763231 33.71479682  0.86326539]
+leftmotor: 87
+rightmotor: 104
+Camera Estimate: [97.19874493 32.98012985  0.84048928]
+leftmotor: 120
+rightmotor: 91
+Camera Estimate: [97.19874493 32.98012985  0.84048928]
+leftmotor: 120
+rightmotor: 91
+Camera Estimate: [97.86797064 32.33844213  0.79917017]
+leftmotor: 144
+rightmotor: 95
+Camera Estimate: [97.86797064 32.33844213  0.79917017]
+leftmotor: 144
+rightmotor: 95
+Camera Estimate: [98.53908327 31.60377516  0.82116606]
+leftmotor: 116
+rightmotor: 126
+Camera Estimate: [98.53908327 31.60377516  0.82116606]
+leftmotor: 116
+rightmotor: 126
+Camera Estimate: [99.40140324 30.68576885  0.79917017]
+leftmotor: 127
+rightmotor: 113
+Camera Estimate: [99.40140324 30.68576885  0.79917017]
+leftmotor: 117
+rightmotor: 92
+Camera Estimate: [100.07251587  29.95110188   0.82116606]
+leftmotor: 132
+rightmotor: 135
+Camera Estimate: [100.07251587  29.95110188   0.82116606]
+leftmotor: 132
+rightmotor: 135
+Camera Estimate: [100.83923217  29.12476524   0.84048928]
+leftmotor: 125
+rightmotor: 117
+Camera Estimate: [100.83923217  29.12476524   0.84048928]
+leftmotor: 125
+rightmotor: 117
+Camera Estimate: [101.5103448   28.39009828   0.81858214]
+leftmotor: 127
+rightmotor: 94
+Camera Estimate: [101.5103448   28.39009828   0.81858214]
+leftmotor: 129
+rightmotor: 92
+Camera Estimate: [102.08585375  27.74710099   0.79917017]
+leftmotor: 130
+rightmotor: 98
+Camera Estimate: [102.08585375  27.74710099   0.79917017]
+leftmotor: 130
+rightmotor: 98
+Camera Estimate: [102.85068313  27.01374359   0.79917017]
+leftmotor: 103
+rightmotor: 95
+Camera Estimate: [102.85068313  27.01374359   0.79917017]
+leftmotor: 103
+rightmotor: 95
+Camera Estimate: [103.51802193  26.46503511   0.77805328]
+leftmotor: 103
+rightmotor: 93
+Camera Estimate: [103.51802193  26.46503511   0.77805328]
+leftmotor: 103
+rightmotor: 93
+Camera Estimate: [104.18913456  25.73036814   0.79917017]
+leftmotor: 126
+rightmotor: 127
+Camera Estimate: [104.18913456  25.73036814   0.79917017]
+leftmotor: 114
+rightmotor: 135
+Camera Estimate: [104.95396394  24.99701074   0.79917017]
+leftmotor: 103
+rightmotor: 92
+Camera Estimate: [104.95396394  24.99701074   0.79917017]
+leftmotor: 103
+rightmotor: 92
+Camera Estimate: [105.62130274  24.44830226   0.77805328]
+leftmotor: 65499
+rightmotor: 129
+Camera Estimate: [105.62130274  24.44830226   0.77805328]
+leftmotor: 65499
+rightmotor: 129
+Camera Estimate: [105.63262423  23.89042681   0.90506693]
+leftmotor: 65463
+rightmotor: 129
+Camera Estimate: [105.63262423  23.89042681   0.90506693]
+leftmotor: 65463
+rightmotor: 129
+Camera Estimate: [105.45462528  23.42291147   1.05305059]
+leftmotor: 65475
+rightmotor: 124
+Camera Estimate: [105.45462528  23.42291147   1.05305059]
+leftmotor: 65478
+rightmotor: 116
+Camera Estimate: [105.18290958  22.95408656   1.22283199]
+leftmotor: 65499
+rightmotor: 99
+Camera Estimate: [105.18290958  22.95408656   1.22283199]
+leftmotor: 65499
+rightmotor: 99
+Camera Estimate: [105.00302372  22.57955046   1.33721041]
+leftmotor: 0
+rightmotor: 96
+Camera Estimate: [105.00302372  22.57955046   1.33721041]
+leftmotor: 0
+rightmotor: 96
+Camera Estimate: [104.72942111  22.2037048    1.42717847]
+leftmotor: 0
+rightmotor: 91
+Camera Estimate: [104.72942111  22.2037048    1.42717847]
+leftmotor: 26
+rightmotor: 90
+Camera Estimate: [104.64513892  21.73749902   1.52021386]
+leftmotor: 64
+rightmotor: 99
+Camera Estimate: [104.64513892  21.73749902   1.52021386]
+leftmotor: 64
+rightmotor: 99
+Camera Estimate: [104.66212115  20.90068585   1.5193049 ]
+leftmotor: 144
+rightmotor: 119
+Camera Estimate: [104.66212115  20.90068585   1.5193049 ]
+leftmotor: 144
+rightmotor: 119
+Camera Estimate: [104.68287721  19.87791419   1.52021386]
+leftmotor: 118
+rightmotor: 131
+Camera Estimate: [104.68287721  19.87791419   1.52021386]
+leftmotor: 118
+rightmotor: 131
+Camera Estimate: [104.61180343  18.76085373   1.55023477]
+leftmotor: 107
+rightmotor: 129
+Camera Estimate: [104.61180343  18.76085373   1.55023477]
+leftmotor: 106
+rightmotor: 117
+Camera Estimate: [104.63067258  17.83106131   1.55023477]
+leftmotor: 129
+rightmotor: 120
+Camera Estimate: [104.63067258  17.83106131   1.55023477]
+leftmotor: 129
+rightmotor: 120
+Camera Estimate: [104.65331555  16.71531041   1.55023477]
+leftmotor: 136
+rightmotor: 134
+Camera Estimate: [104.65331555  16.71531041   1.55023477]
+leftmotor: 136
+rightmotor: 134
+Camera Estimate: [104.67407161  15.69253876   1.55023477]
+leftmotor: 119
+rightmotor: 123
+Camera Estimate: [104.67407161  15.69253876   1.55023477]
+leftmotor: 119
+rightmotor: 123
+Camera Estimate: [104.69482767  14.6697671    1.55023477]
+leftmotor: 112
+rightmotor: 87
+Camera Estimate: [104.69482767  14.6697671    1.55023477]
+leftmotor: 119
+rightmotor: 99
+Camera Estimate: [104.71369682  13.73997468   1.55023477]
+leftmotor: 94
+rightmotor: 87
+Camera Estimate: [104.71369682  13.73997468   1.55023477]
+leftmotor: 94
+rightmotor: 87
+Camera Estimate: [104.73445288  12.71720303   1.55023477]
+leftmotor: 95
+rightmotor: 95
+Camera Estimate: [104.73445288  12.71720303   1.55023477]
+leftmotor: 95
+rightmotor: 95
+Camera Estimate: [104.84515187  11.88169942   1.52021386]
+leftmotor: 99
+rightmotor: 83
+Camera Estimate: [104.84515187  11.88169942   1.52021386]
+leftmotor: 99
+rightmotor: 83
+Camera Estimate: [104.95396394  11.13917505   1.49025913]
+leftmotor: 114
+rightmotor: 124
+Camera Estimate: [104.95396394  11.13917505   1.49025913]
+leftmotor: 114
+rightmotor: 124
+Camera Estimate: [104.97660692  10.02342415   1.49025913]
+leftmotor: 104
+rightmotor: 131
+Camera Estimate: [104.97660692  10.02342415   1.49025913]
+leftmotor: 104
+rightmotor: 131
+Camera Estimate: [105.08541899   9.28089979   1.46042385]
+leftmotor: 0
+rightmotor: 0

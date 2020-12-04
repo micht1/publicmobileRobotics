@@ -56,7 +56,7 @@ def stop(thymio,verbose=False):
 def run_ann_without_memory(thymio):
 
     # Weights of neuron inputs
-    w_l = np.array([40,  20, -20, -20, -40,  30, -10])
+    w_l = np.array([40,  20, -19, -20, -40,  30, -10])
     w_r = np.array([-40, -20, -20,  20,  40, -10,  30])
 
     # Scale factors for sensors and constant factor
@@ -82,7 +82,7 @@ def run_ann_without_memory(thymio):
 
             #print(j, int(y[0]), int(y[1]), thymio["prox.horizontal"])
             move(thymio,int(y[0]), int(y[1]))
-        if(all(sensorValues==0 for sensorValues in robotStatus.thymio["prox.horizontal"])):
+        if(all(sensorValues==0 for sensorValues in thymio["prox.horizontal"])):
             stop(thymio)
             return
   #run_ann_without_memory(th)

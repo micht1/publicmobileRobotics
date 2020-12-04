@@ -1,3 +1,6 @@
+import numpy as np
+import math
+from matplotlib import pyplot as plt
 # initial_kalman_values = X(0) inital state
 # initial_input = u(0) initial input
 # initial_covariance = intial covarience
@@ -8,7 +11,9 @@
 
 def kalman_filt(initial_kalman_values,initial_input,initial_covariance,measured_states,A,B,C,Q,R):
     Q=np.array(Q)
-    predict_position=np.matmul(A.astype(float),ini_pose.astype(float))+np.matmul(B.astype(float),initial_input.astype(float))
+    A_prime = np.matmul(A.astype(float),initial_kalman_values.astype(float))
+    B_prime = np.matmul(B.astype(float),initial_input.astype(float))
+    predict_position= A_prime+B_prime
     predict_cov=np.matmul(np.matmul(A.astype(float),initial_covariance.astype(float)),np.transpose(A))+Q
     i=measured_states-np.matmul(C.astype(float),predict_position.astype(float))
     S=np.matmul(np.matmul(C.astype(float),predict_cov.astype(float)),np.transpose(C))+R
@@ -23,3 +28,7 @@ def kalman_filt(initial_kalman_values,initial_input,initial_covariance,measured_
         cov=np.matmul((np.eye(len(Q.astype(float)))-np.matmul(K.astype(float),C.astype(float))),predict_cov)
 
     return(thymio_position,cov)
+
+
+
+
