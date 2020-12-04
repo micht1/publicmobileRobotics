@@ -42,8 +42,7 @@ def initialization():
 
 
 
-def bg_clustering(image, px_zero):
-    threshold_bg = 115
+def bg_clustering(image, px_zero,threshold_bg):
     list_p = [] # Place holder
     output = np.zeros_like(image) # place holder output img
     list_p.append((px_zero[0], px_zero[1])) # Get our initial background pixel picked
@@ -92,25 +91,35 @@ def get_thymio_info(img,M,im_dim,dim):
     img[obstacles == [255]] = [0,0,0] # Remove the obstacles from our current image
     thymio_map = color_filtering(img,"blue") # Apply a blue filter to keep the dots on the thymio
     thymio_coords = end_point_start_point(thymio_map, 0.001, "thymio") # Get the thymio position (x,y of the centers of the two blue circles on the thymio)
-    bigpt = thymio_coords[0] # Coords of the bigger circle on the thymio
-    
-    smallpt = thymio_coords[1] # Coords of the smaller circle on the thymio
-    
-    thymio_coord_big = tranformation_matrix(bigpt,M) # Get the location of the big circle in the straight image
-    thymio_coord_small = tranformation_matrix(smallpt,M) # Get the location of the small circle in the straight image
-    thymio_center_coord, thymio_orientation = orientation_location_thymio(thymio_coord_big, thymio_coord_small) # Get the orientation of the thymio (angle)
-    thymio_center_coord = transformation_downgrade_coords(thymio_center_coord,im_dim,dim) # Get the coordinates in the small resolution image
-    thymio_coord = [thymio_center_coord, thymio_orientation] # Concatinate the data
-    #print("Thymio Coordinates + Orientation: ", thymio_coord)
-    return thymio_coord
+    if (thymio_coords[0][0] > 0):       # if the thymio is not properly detected
+        bigpt = thymio_coords[0] # Coords of the bigger circle on the thymio
+        
+        smallpt = thymio_coords[1] # Coords of the smaller circle on the thymio
+        
+        thymio_coord_big = tranformation_matrix(bigpt,M) # Get the location of the big circle in the straight image
+        thymio_coord_small = tranformation_matrix(smallpt,M) # Get the location of the small circle in the straight image
+        thymio_center_coord, thymio_orientation = orientation_location_thymio(thymio_coord_big, thymio_coord_small) # Get the orientation of the thymio (angle)
+        thymio_center_coord = transformation_downgrade_coords(thymio_center_coord,im_dim,dim) # Get the coordinates in the small resolution image
+        thymio_coord = [thymio_center_coord, thymio_orientation] # Concatinate the data
+        #print("Thymio Coordinates + Orientation: ", thymio_coord)
+        return thymio_coord
+    else:
+        thymio_coords = [(-1,-1), float("nan")]
+        print("Thymio not detected by Vision")
+        return thymio_coords
 
 def get_endpoint_info(img,M,im_dim,dim):
-    endpoint_map = color_filtering(img,"green") # Apply a blue filter to keep the dots on the thymio
-    endpoint_coord = end_point_start_point(endpoint_map, 0.001, "endpoint") # Get the endpoint position (x,y of the center of the star)
-    endpoint_coord = tranformation_matrix(endpoint_coord,M) # Get the endpoint in the straight image
-    endpoint_coord = transformation_downgrade_coords(endpoint_coord,im_dim,dim) # Get the coordinates in the small resolution image
-    print("Endpoint Coordinates: ", endpoint_coord)
-    return endpoint_coord
+    if (thymio_coords[0] > 0):
+        endpoint_map = color_filtering(img,"green") # Apply a blue filter to keep the dots on the thymio
+        endpoint_coord = end_point_start_point(endpoint_map, 0.001, "endpoint") # Get the endpoint position (x,y of the center of the star)
+        endpoint_coord = tranformation_matrix(endpoint_coord,M) # Get the endpoint in the straight image
+        endpoint_coord = transformation_downgrade_coords(endpoint_coord,im_dim,dim) # Get the coordinates in the small resolution image
+        print("Endpoint Coordinates: ", endpoint_coord)
+        return endpoint_coord
+    else:
+        endpoint_coord = [(-1,-1)]
+        print("Endpoint not detected by Vision")
+        return thymio_coords
 
 def tranformation_matrix(pt,M):
     A = M[0:2,0:2]; # Rotation Matrix
@@ -257,10 +266,15 @@ def end_point_start_point(img,constant,point,clust=1):
     location_image = np.zeros([output_grey.shape[0],output_grey.shape[1]]) # Place holder for the
     i = 0 # index
     for c in largest_areas:
-        M = cv2.moments(c) # calculating moments for each contour, i.e center of the circle englobing the contours
-        cX = int(M["m10"] / M["m00"]) # calculate x coordinate of center
-        cY = int(M["m01"] / M["m00"]) # calculate y coordinate of center
-        cv2.circle(location_image, (cX, cY), 5, (255, 255, 255), -1) # Draw the circle englobing the contours
+        try:
+            M = cv2.moments(c) # calculating moments for each contour, i.e center of the circle englobing the contours
+            cX = int(M["m10"] / M["m00"]) # calculate x coordinate of center
+            cY = int(M["m01"] / M["m00"]) # calculate y coordinate of center
+            cv2.circle(location_image, (cX, cY), 5, (255, 255, 255), -1) # Draw the circle englobing the contours
+        except ZeroDivisionError as err:
+            coordinates = [[-1,-1],[-1,-1]]
+            break
+            
         if (point == "thymio"):
             coordinates[i] = [cX, cY] # Assign coordinates
         else:
@@ -269,6 +283,9 @@ def end_point_start_point(img,constant,point,clust=1):
     if Plot:
         plt.imshow(location_image)
         plt.show()
+    if(point == "thymio"): # if we are getting garbage as location of the thymio
+        if (abs(coordinates[0][0]-coordinates[1][0]) > 40 or abs(coordinates[0][0]-coordinates[1][0]) > 40):
+            coordinates = [[-1,-1],[-1,-1]]
     return coordinates
 
 def orientation_location_thymio(bigpt, smallpt):
