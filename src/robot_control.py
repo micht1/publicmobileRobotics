@@ -1,5 +1,5 @@
 
-iimport os
+import os
 import sys
 import time
 import math
@@ -27,7 +27,6 @@ def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,
         T = np.float32(t[1]-t[0])
 
     t[0] = time.time()
-    print(T)
 
     speed_l = th["motor.left.speed"]
     speed_r = th["motor.right.speed"]
@@ -66,7 +65,6 @@ def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,
     Sigma = np.asarray(np.bmat([[sigma_p, Z], [np.transpose(Z), sigma_delta]]))
     D = np.matmul(J, Sigma)
     Sigma_prim = np.matmul(D, np.transpose(J))
-    print("Sigma_prim", Sigma_prim)
 
     #######################################################################
     
@@ -91,14 +89,6 @@ def path_following(p, path, THREASHOLD = 0.5):
     if err_angle < - math.pi:
         err_angle = 2*math.pi + err_angle
 
-    #print some variables
-    print('position:         ', p)
-    print('waypoint:         ', waypoint)
-    print('waypoint dir:     ', waypoint_dir)
-    print('waypoint dist:    ', waypoint_dist)
-    print('waypoint angle:   ', waypoint_ang)
-    print('error angle:      ', err_angle)
-    print("\n")
 
     ###################################################
 
@@ -130,7 +120,7 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
     
     ### Proportional control
     forward_speed = K/3/(5*math.fabs(err_angle)+1)
-    rotation_speed = err_angle*K/2
+    rotation_speed = err_angle*K/4
 
     #compute wheel speed speed
     left_wheel_speed = forward_speed - rotation_speed
