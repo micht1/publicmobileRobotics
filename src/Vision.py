@@ -105,13 +105,14 @@ def get_thymio_info(img,M,im_dim,dim):
         return thymio_coord
     else:
         thymio_coords = [(-1,-1), float("nan")]
-        print("Thymio not detected by Vision")
+        #print("Thymio not detected by Vision")
         return thymio_coords
 
 def get_endpoint_info(img,M,im_dim,dim):
-    if (thymio_coords[0] > 0):
-        endpoint_map = color_filtering(img,"green") # Apply a blue filter to keep the dots on the thymio
-        endpoint_coord = end_point_start_point(endpoint_map, 0.001, "endpoint") # Get the endpoint position (x,y of the center of the star)
+    
+    endpoint_map = color_filtering(img,"green") # Apply a blue filter to keep the dots on the thymio
+    endpoint_coord = end_point_start_point(endpoint_map, 0.001, "endpoint") # Get the endpoint position (x,y of the center of the star)
+    if (endpoint_coord[0] > 0):
         endpoint_coord = tranformation_matrix(endpoint_coord,M) # Get the endpoint in the straight image
         endpoint_coord = transformation_downgrade_coords(endpoint_coord,im_dim,dim) # Get the coordinates in the small resolution image
         print("Endpoint Coordinates: ", endpoint_coord)
