@@ -1,6 +1,18 @@
+
+iimport os
+import sys
 import time
 import math
+import serial
 import numpy as np
+import matplotlib.pyplot as plt
+
+sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+
+from Thymio import Thymio
+from tqdm import tqdm
+
+#const definition
 SPEED = 200
 MAX_SPEED = 500
 
