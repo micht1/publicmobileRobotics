@@ -1,46 +1,7 @@
 
-import os
-import sys
-import time
-import math
-import serial
 import numpy as np
-import matplotlib.pyplot as plt
-
-sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
-
-from Thymio import Thymio
-from tqdm import tqdm
-
-#const definition
 SPEED = 200
 MAX_SPEED = 500
-
-#variables definition
-Ts = 0.1
-Tw = 0.05
-p = np.zeros(3)
-#delta_p = np.array([[0],[0],[0]])
-Sigma_prim = np.zeros((3,3))
-trace_x = []
-trace_y = []
-plot = False
-######################## TEST PATHS #############################
-#sine
-# x_axis = np.arange(0,50,5)
-# amplitude = 5*np.sin(x_axis/5)
-# path = np.array([x_axis,amplitude])
-#10cm square
-path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
-#straight line
-#path = np.array([[0,60],[0,0]])
-#################################################################
-
-#show path
-# plt.plot(path)
-# plt.show()
-
-t = np.array([0,0], dtype = 'float64')
 
 def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,2))):
 
@@ -98,16 +59,6 @@ def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,
     
     return p, Sigma_prim, t
 
-def popcol(my_array,pc):
-    """ column popping in numpy arrays
-    Input: my_array: NumPy array, pc: column index to pop out
-    Output: [new_array,popped_col] """
-    print('---------------------------------------------------------WAYPOINT REACHED')
-    i = pc
-    pop = my_array[:,i]
-    new_array = np.hstack((my_array[:,:i],my_array[:,i+1:]))
-    return [new_array,pop]
-
 def path_following(p, path, THREASHOLD = 0.5):
     
     waypoint = path[:,0]
@@ -150,6 +101,16 @@ def path_following(p, path, THREASHOLD = 0.5):
 
     return p, path
 
+def popcol(my_array,pc):
+    """ column popping in numpy arrays
+    Input: my_array: NumPy array, pc: column index to pop out
+    Output: [new_array,popped_col] """
+    print('---------------------------------------------------------WAYPOINT REACHED')
+    i = pc
+    pop = my_array[:,i]
+    new_array = np.hstack((my_array[:,:i],my_array[:,i+1:]))
+    return [new_array,pop]
+
 def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD = 0.1):
 
     ################### regulation #####################
@@ -184,58 +145,3 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
         th.set_var("motor.right.target", 2**16 + right_wheel_speed)
     else:
         th.set_var("motor.right.target", right_wheel_speed)
-
-
-
-th = Thymio.serial(port="COM6", refreshing_rate=Ts)
-
-# wait until connected
-while len(th.variable_description()) == 0:
-	time.sleep(0.5)
-	print("wating for connection...")
-
-print("connected")
-time.sleep(3)
-
-if plot:
-    plt.ion()
-    figure, ax = plt.subplots(figsize=(8,6))
-    line1, = ax.plot(p[0],p[1])
-    plt.xlim(-50, 50)
-    plt.ylim(-50, 50)
-
-# control
-while np.size(path):
-    time.sleep(Tw)
-    p, Sigma_prim, t = odometry(p, Sigma_prim, t, MAX_SPEED)
-    p, path = path_following(p, path)
-
-    if plot:
-        trace_x.append(p[0])
-        trace_y.append(p[1])
-        line1.set_xdata(trace_x)
-        line1.set_ydata(trace_y)
-        figure.canvas.draw()
-        figure.canvas.flush_events()
-
-    ############### manual control ##################
-    # if th["button.forward"] == 1:
-    #     th.set_var("motor.left.target", SPEED)
-    #     th.set_var("motor.right.target", SPEED)
-    # elif th["button.right"] == 1:
-    #     th.set_var("motor.left.target", SPEED)
-    #     th.set_var("motor.right.target", 2**16-SPEED)
-    # elif th["button.left"] == 1:
-    #     th.set_var("motor.left.target", 2**16-SPEED)
-    #     th.set_var("motor.right.target", SPEED)
-    # else:
-    #     th.set_var("motor.left.target", 0)
-    #     th.set_var("motor.right.target", 0)
-    #################################################
-
-    if th["button.center"] == 1:
-        break
-th.set_var("motor.left.target", 0)
-th.set_var("motor.right.target", 0)
-time.sleep(1)
-quit()
