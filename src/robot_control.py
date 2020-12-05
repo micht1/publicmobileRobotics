@@ -19,7 +19,6 @@ MAX_SPEED = 500
 #variables definition
 Ts = 0.1
 Tw = 0.05
-forward = 0
 p = np.zeros(3)
 #delta_p = np.array([[0],[0],[0]])
 Sigma_prim = np.zeros((3,3))
@@ -32,9 +31,9 @@ plot = False
 # amplitude = 5*np.sin(x_axis/5)
 # path = np.array([x_axis,amplitude])
 #10cm square
-#path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
+path = np.array([[0,10,10,0,0],[0,0,-10,-10,0]])
 #straight line
-path = np.array([[0,60],[0,0]])
+#path = np.array([[0,60],[0,0]])
 #################################################################
 
 #show path
@@ -158,19 +157,6 @@ def speed_regulation(waypoint_dist, err_angle, K = MAX_SPEED, FORWARD_THREASHOLD
     ### Proportional control
     forward_speed = K/3/(5*math.fabs(err_angle)+1)
     rotation_speed = err_angle*K/2
-    
-    ### separated turn and forward displacement
-    # if math.fabs(err_angle) <= FORWARD_THREASHOLD:
-    #     th.set_var("motor.left.target", SPEED)
-    #     th.set_var("motor.right.target", SPEED)
-    # if err_angle > FORWARD_THREASHOLD:
-    #     th.set_var("motor.left.target", 2**16 - SPEED)
-    #     th.set_var("motor.right.target", SPEED)
-    # if err_angle < (-1*FORWARD_THREASHOLD):
-    #     th.set_var("motor.left.target", SPEED)
-    #     th.set_var("motor.right.target", 2**16 - SPEED)
-    
-    #####################################################
 
     #compute wheel speed speed
     left_wheel_speed = forward_speed - rotation_speed
