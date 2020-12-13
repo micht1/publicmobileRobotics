@@ -13,8 +13,8 @@ from Thymio import Thymio
 from tqdm import tqdm
 
 #const definition
-SPEED = 200
-MAX_SPEED = 500
+SPEED = 100
+MAX_SPEED = 300
 
 def odometry(p, sigma_p, t, MAX_SPEED, B = 9.5, CALIB = 0.0315, Z = np.zeros((3,2))):
 
